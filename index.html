@@ -404,6 +404,90 @@
   }
   #save-indicator.visible { opacity: 1; }
 
+  /* ── EXPORT MODAL ── */
+  #export-modal {
+    position: fixed; inset: 0; z-index: 9998;
+    background: rgba(4,6,15,0.88);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+
+  .export-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    width: 100%; max-width: 560px;
+    padding: 28px 28px 24px;
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8);
+  }
+  .export-box::before {
+    content: '';
+    position: absolute; top: -1px; left: 15%; right: 15%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .export-title {
+    font-family: 'Aquire', monospace;
+    font-size: 0.8rem; letter-spacing: 0.22em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .export-desc {
+    font-size: 0.68rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 14px; letter-spacing: 0.03em;
+  }
+  .export-desc code { color: var(--accent); font-size: 0.68rem; }
+
+  #export-textarea {
+    width: 100%; height: 180px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    color: #7a9aaa;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem; line-height: 1.5;
+    padding: 10px 12px; outline: none; resize: vertical;
+    letter-spacing: 0.02em;
+  }
+  #export-textarea:focus { border-color: var(--accent); }
+
+  .export-actions {
+    display: flex; gap: 10px; margin-top: 14px; align-items: center;
+  }
+
+  .export-copy-btn {
+    flex: 1; padding: 10px;
+    background: transparent; border: 1px solid var(--accent);
+    color: var(--accent); font-family: 'Aquire', monospace;
+    font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .export-copy-btn::before { content: ''; position: absolute; inset: 0; background: var(--accent); opacity: 0; transition: opacity 0.2s; }
+  .export-copy-btn:hover::before { opacity: 0.1; }
+  .export-copy-btn:hover { box-shadow: var(--glow); }
+  .export-copy-btn.copied { border-color: #69f0ae; color: #69f0ae; }
+
+  .export-close-btn {
+    padding: 10px 20px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .export-close-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  .export-btn {
+    width: 100%; padding: 10px;
+    background: transparent; border: 1px solid rgba(0,229,255,0.3);
+    color: var(--accent); font-family: 'Aquire', monospace;
+    font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .export-btn::before { content: ''; position: absolute; inset: 0; background: var(--accent); opacity: 0; transition: opacity 0.2s; }
+  .export-btn:hover::before { opacity: 0.07; }
+  .export-btn:hover { border-color: var(--accent); box-shadow: var(--glow); }
+
   #viewer-banner {
     display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: rgba(8,13,28,0.85); border: 1px solid #0d1525;
@@ -453,6 +537,19 @@
 <div id="viewer-banner">&#128065; Player View &nbsp;&#8212;&nbsp; Read Only</div>
 <div id="save-indicator">&#10003; Saved</div>
 
+<!-- ── EXPORT MODAL ── -->
+<div id="export-modal" style="display:none">
+  <div class="export-box">
+    <div class="export-title">&#9632; Export State</div>
+    <p class="export-desc">Copy the block below and paste it into your <code>index.html</code> to replace the default data — overwriting lines that start with <code>let owners =</code> and <code>let planets =</code>.</p>
+    <textarea id="export-textarea" readonly spellcheck="false"></textarea>
+    <div class="export-actions">
+      <button class="export-copy-btn" id="export-copy-btn" onclick="copyExport()">&#9670; Copy to Clipboard</button>
+      <button class="export-close-btn" onclick="closeExport()">Close</button>
+    </div>
+  </div>
+</div>
+
 <header>
   <h1>&#9672; Territory Map</h1>
   <span class="header-meta" id="status-bar">3 PLANETS // LIVE</span>
@@ -487,6 +584,11 @@
     <div class="sidebar-section">
       <h2>&#9656; Legend</h2>
       <div id="legend"></div>
+    </div>
+    <div class="sidebar-section" style="border-bottom:none">
+      <h2>&#9656; Tools</h2>
+      <button class="export-btn" onclick="openExport()">&#8615; Export State for GitHub</button>
+      <p style="font-size:0.58rem;color:var(--muted);margin-top:8px;line-height:1.6;letter-spacing:0.04em">Exports current map data to paste into your <code style="color:var(--accent);font-size:0.58rem">index.html</code> so all players see your changes after re-uploading.</p>
     </div>
   </div>
 </div>
@@ -909,6 +1011,45 @@ function loadState() {
   } catch(e) { console.warn('Load failed:', e); }
   return false;
 }
+
+function openExport() {
+  const ownersStr = JSON.stringify(owners, null, 2);
+  const planetsStr = JSON.stringify(planets, null, 2);
+  const output =
+`let owners = ${ownersStr};
+
+let planets = ${planetsStr};`;
+  document.getElementById('export-textarea').value = output;
+  document.getElementById('export-modal').style.display = 'flex';
+  document.getElementById('export-copy-btn').textContent = '\u25c7 Copy to Clipboard';
+  document.getElementById('export-copy-btn').classList.remove('copied');
+}
+
+function closeExport() {
+  document.getElementById('export-modal').style.display = 'none';
+}
+
+async function copyExport() {
+  const text = document.getElementById('export-textarea').value;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById('export-copy-btn');
+    btn.textContent = '\u2714 Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '\u25c7 Copy to Clipboard';
+      btn.classList.remove('copied');
+    }, 2500);
+  } catch(e) {
+    // Fallback: select the textarea text
+    document.getElementById('export-textarea').select();
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById('export-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeExport();
+});
 
 // Debounced save — coalesces rapid drag updates into one write
 let saveTimer = null;
