@@ -393,6 +393,84 @@
   /* viewer mode */
   body.viewer-mode #sidebar { display: none; }
   body.viewer-mode .planet-body { cursor: default !important; }
+  body.viewer-mode .moon-body { cursor: default !important; }
+
+  /* ── PLAYER INTEL PANEL ── */
+  .player-sidebar {
+    width: 270px; flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    background: var(--panel);
+    overflow-y: auto;
+    transition: width 0.25s ease, opacity 0.25s ease, border-color 0.25s ease;
+    opacity: 1;
+  }
+  .player-sidebar.collapsed {
+    width: 0; opacity: 0; border-color: transparent; overflow: hidden;
+  }
+  /* hidden in GM mode */
+  body:not(.viewer-mode) .player-sidebar { display: none; }
+
+  .ps-section { border-bottom: 1px solid var(--border); padding: 14px 16px; }
+  .ps-heading {
+    font-family: 'Aquire', monospace; font-size: 0.65rem;
+    letter-spacing: 0.2em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+
+  /* faction rows */
+  .ps-faction {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .ps-faction:last-child { border-bottom: none; }
+  .ps-faction-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .ps-faction-tag {
+    font-family: 'Aquire', monospace; font-size: 0.58rem;
+    letter-spacing: 0.1em; padding: 1px 5px;
+    border: 1px solid currentColor; opacity: 0.85; flex-shrink: 0;
+  }
+  .ps-faction-name {
+    font-size: 0.62rem; letter-spacing: 0.05em; color: var(--text);
+    line-height: 1.3; min-width: 0;
+  }
+
+  /* planet entries */
+  .ps-planet { margin-bottom: 12px; }
+  .ps-planet:last-child { margin-bottom: 0; }
+  .ps-planet-header {
+    display: flex; align-items: center; gap: 7px; margin-bottom: 5px;
+  }
+  .ps-planet-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .ps-planet-name {
+    font-family: 'Aquire', monospace; font-size: 0.7rem;
+    letter-spacing: 0.12em; color: var(--text); text-transform: uppercase;
+    flex: 1;
+  }
+  .ps-planet-status {
+    font-size: 0.58rem; letter-spacing: 0.1em; padding: 1px 6px;
+    border: 1px solid; font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase; flex-shrink: 0;
+  }
+  .ps-planet-status.owned { border-color: currentColor; }
+  .ps-planet-status.contested { color: #ff5555; border-color: #ff5555; }
+  .ps-planet-status.unclaimed { color: var(--muted); border-color: var(--muted); }
+  .ps-moons { padding-left: 17px; display: flex; flex-direction: column; gap: 3px; }
+  .ps-moon {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.6rem; color: var(--muted); letter-spacing: 0.06em;
+  }
+  .ps-moon-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+  /* toggle button */
+  .player-panel-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; border: 1px solid #1a2540;
+    color: var(--muted); font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 4px 12px; cursor: pointer; transition: all 0.2s;
+  }
+  .player-panel-toggle:hover,
+  .player-panel-toggle.active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 8px rgba(0,229,255,0.15); }
 
   #save-indicator {
     position: fixed; bottom: 20px; right: 24px;
@@ -559,7 +637,8 @@
       <div class="dot"></div>GM MODE &nbsp;&#9632; LOCK
     </div>
   </div>
-  <div id="viewer-controls" style="display:none">
+  <div id="viewer-controls" style="display:none;gap:8px;align-items:center">
+    <button class="player-panel-toggle" id="player-panel-toggle" onclick="togglePlayerPanel()" title="Toggle intel panel">&#9776; Intel</button>
     <div class="header-back-btn viewer" onclick="goToEntry()">&#8592; Entry</div>
   </div>
 </header>
@@ -570,6 +649,7 @@
   <div id="map-area">
     <svg id="map" viewBox="0 0 900 640" preserveAspectRatio="xMidYMid meet"></svg>
   </div>
+  <!-- GM sidebar -->
   <div id="sidebar">
     <div class="sidebar-section">
       <h2>&#9656; Factions</h2>
@@ -589,6 +669,17 @@
       <h2>&#9656; Tools</h2>
       <button class="export-btn" onclick="openExport()">&#8615; Export State for GitHub</button>
       <p style="font-size:0.58rem;color:var(--muted);margin-top:8px;line-height:1.6;letter-spacing:0.04em">Exports current map data to paste into your <code style="color:var(--accent);font-size:0.58rem">index.html</code> so all players see your changes after re-uploading.</p>
+    </div>
+  </div>
+  <!-- Player intel panel -->
+  <div id="player-sidebar" class="player-sidebar collapsed">
+    <div class="ps-section">
+      <div class="ps-heading">&#9656; Factions</div>
+      <div id="ps-factions"></div>
+    </div>
+    <div class="ps-section">
+      <div class="ps-heading">&#9656; Systems</div>
+      <div id="ps-planets"></div>
     </div>
   </div>
 </div>
@@ -665,179 +756,19 @@ function togglePwVis() {
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 let owners = [
-  {
-    "id": "o1",
-    "name": "MIKAZUKI MUNITIONS",
-    "color": "#00e5ff",
-    "tag": "M/M"
-  },
-  {
-    "id": "o2",
-    "name": "GRAY AEROSPACE ORGANIZATION",
-    "color": "#808080",
-    "tag": "GAO"
-  },
-  {
-    "id": "o3",
-    "name": "OSIRIS PROTECTORATE",
-    "color": "#ffffff",
-    "tag": "OSS"
-  },
-  {
-    "id": "ox3e89mm",
-    "name": "FRONTIER-SOUTHERN TRADE COMMISSION",
-    "color": "#ff8000",
-    "tag": "FSC"
-  },
-  {
-    "id": "ox3suvu9",
-    "name": "PEOPLE'S ALLIANCE OF KENTARA & TOLIMAN",
-    "color": "#ff0000",
-    "tag": "PAK"
-  },
-  {
-    "id": "ox68834o",
-    "name": "THE CARRION ACCORDS",
-    "color": "#008040",
-    "tag": "TCA"
-  },
-  {
-    "id": "ox655bdp",
-    "name": "LACONIA",
-    "color": "#0000ff",
-    "tag": "LAC"
-  }
+  {"id":"o1","name":"MIKAZUKI MUNITIONS","color":"#00e5ff","tag":"M/M"},
+  {"id":"o2","name":"GRAY AEROSPACE ORGANIZATION","color":"#808080","tag":"GAO"},
+  {"id":"o3","name":"OSIRIS PROTECTORATE","color":"#ffffff","tag":"OSS"},
+  {"id":"ox3e89mm","name":"FRONTIER-SOUTHERN TRADE COMMISSION","color":"#ff8000","tag":"FSC"},
+  {"id":"ox3suvu9","name":"PEOPLE'S ALLIANCE OF KENTARA & TOLIMAN","color":"#ff0000","tag":"PAK"},
+  {"id":"ox68834o","name":"THE CARRION ACCORDS","color":"#008040","tag":"TCA"},
+  {"id":"ox655bdp","name":"LACONIA","color":"#0000ff","tag":"LAC"}
 ];
 
 let planets = [
-  {
-    "id": "p1",
-    "name": "LOKI",
-    "color": "#4fc3f7",
-    "size": 60,
-    "owner": "o1",
-    "contested": true,
-    "contestedFactions": [
-      "o1",
-      "o2"
-    ],
-    "pos": {
-      "x": 513.4584013050571,
-      "y": 166.52646801499438
-    },
-    "moons": [
-      {
-        "id": "m1a",
-        "name": "THOR",
-        "owner": "o2",
-        "orbitR": 126.6227562545915,
-        "angle": 47.03687093000694
-      },
-      {
-        "id": "m1b",
-        "name": "ODIN",
-        "owner": "o1",
-        "orbitR": 105.70667759752422,
-        "angle": -124.92801537119878
-      }
-    ]
-  },
-  {
-    "id": "p2",
-    "name": "PANTHEON",
-    "color": "#ef5350",
-    "size": 55,
-    "owner": null,
-    "contested": false,
-    "contestedFactions": [
-      "o1",
-      "o2"
-    ],
-    "pos": {
-      "x": 238.10766721044047,
-      "y": 426.93535874069244
-    },
-    "moons": [
-      {
-        "id": "m2a",
-        "name": "ARES",
-        "owner": "o2",
-        "orbitR": 111.17647032156877,
-        "angle": -88.99949719887324
-      },
-      {
-        "id": "m2b",
-        "name": "APHRODITE",
-        "owner": "ox655bdp",
-        "orbitR": 125.66886695329654,
-        "angle": 92.46261304368922
-      },
-      {
-        "id": "m2c",
-        "name": "ATHENA",
-        "owner": "ox3e89mm",
-        "orbitR": 98.12742362730633,
-        "angle": -1.1497510357739003
-      },
-      {
-        "id": "xsvcybl",
-        "name": "ARTEMIS",
-        "owner": "ox68834o",
-        "orbitR": 136.8076301118481,
-        "angle": -179.5091649637221
-      },
-      {
-        "id": "xysx18n",
-        "name": "APOLLO",
-        "owner": "o1",
-        "orbitR": 167.4075402750856,
-        "angle": 173.01879880614996
-      }
-    ]
-  },
-  {
-    "id": "p3",
-    "name": "EVIRA",
-    "color": "#a5d6a7",
-    "size": 50,
-    "owner": "o3",
-    "contested": false,
-    "contestedFactions": [],
-    "pos": {
-      "x": 689.7226753670473,
-      "y": 437.4120702608754
-    },
-    "moons": [
-      {
-        "id": "m3a",
-        "name": "OSIRIS",
-        "owner": "o3",
-        "orbitR": 89.3767524318114,
-        "angle": 8.401448548551699
-      },
-      {
-        "id": "x9lcoxw",
-        "name": "VEIL",
-        "owner": "o2",
-        "orbitR": 116.54054662921969,
-        "angle": -84.77965135336561
-      },
-      {
-        "id": "xnzvui4",
-        "name": "CASCAIS",
-        "owner": "ox3suvu9",
-        "orbitR": 116.40190082872788,
-        "angle": -179.36622946742895
-      },
-      {
-        "id": "xjtrwiu",
-        "name": "DEMETIO",
-        "owner": "ox3suvu9",
-        "orbitR": 141.72724383846014,
-        "angle": 94.02620729353585
-      }
-    ]
-  }
+  {"id":"p1","name":"LOKI","color":"#4fc3f7","size":60,"owner":"o1","contested":true,"contestedFactions":["o1","o2"],"pos":{"x":513.4584013050571,"y":166.52646801499438},"moons":[{"id":"m1a","name":"THOR","owner":"o2","orbitR":126.6227562545915,"angle":47.03687093000694},{"id":"m1b","name":"ODIN","owner":"o1","orbitR":105.70667759752422,"angle":-124.92801537119878}]},
+  {"id":"p2","name":"PANTHEON","color":"#ef5350","size":55,"owner":null,"contested":false,"contestedFactions":["o1","o2"],"pos":{"x":238.10766721044047,"y":426.93535874069244},"moons":[{"id":"m2a","name":"ARES","owner":"o2","orbitR":111.17647032156877,"angle":-88.99949719887324},{"id":"m2b","name":"APHRODITE","owner":"ox655bdp","orbitR":125.66886695329654,"angle":92.46261304368922},{"id":"m2c","name":"ATHENA","owner":"ox3e89mm","orbitR":98.12742362730633,"angle":-1.1497510357739003},{"id":"xsvcybl","name":"ARTEMIS","owner":"ox68834o","orbitR":136.8076301118481,"angle":-179.5091649637221},{"id":"xysx18n","name":"APOLLO","owner":"o1","orbitR":167.4075402750856,"angle":173.01879880614996}]},
+  {"id":"p3","name":"EVIRA","color":"#a5d6a7","size":50,"owner":"o3","contested":false,"contestedFactions":[],"pos":{"x":689.7226753670473,"y":437.4120702608754},"moons":[{"id":"m3a","name":"OSIRIS","owner":"o3","orbitR":89.3767524318114,"angle":8.401448548551699},{"id":"x9lcoxw","name":"VEIL","owner":"o2","orbitR":116.54054662921969,"angle":-84.77965135336561},{"id":"xnzvui4","name":"CASCAIS","owner":"ox3suvu9","orbitR":116.40190082872788,"angle":-179.36622946742895},{"id":"xjtrwiu","name":"DEMETIO","owner":"ox3suvu9","orbitR":141.72724383846014,"angle":94.02620729353585}]}
 ];
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -1123,6 +1054,83 @@ function updateStatusBar() {
   const contested = planets.filter(p=>p.contested&&p.contestedFactions.length>=2).length;
   document.getElementById('status-bar').textContent =
     `${total} PLANET${total!==1?'S':''} // ${moons} MOON${moons!==1?'S':''} // ${contested} CONTESTED // LIVE`;
+}
+
+// ── PLAYER INTEL PANEL ───────────────────────────────────────────────────────
+let playerPanelOpen = false;
+
+function togglePlayerPanel() {
+  playerPanelOpen = !playerPanelOpen;
+  const panel = document.getElementById('player-sidebar');
+  const btn   = document.getElementById('player-panel-toggle');
+  if (playerPanelOpen) {
+    panel.classList.remove('collapsed');
+    btn.classList.add('active');
+    renderPlayerSidebar();
+  } else {
+    panel.classList.add('collapsed');
+    btn.classList.remove('active');
+  }
+}
+
+function renderPlayerSidebar() {
+  // Factions
+  const fEl = document.getElementById('ps-factions');
+  fEl.innerHTML = '';
+  owners.forEach(o => {
+    const pCount = planets.filter(p => p.owner === o.id).length;
+    const mCount = planets.flatMap(p => p.moons).filter(m => m.owner === o.id).length;
+    const cCount = planets.filter(p => p.contested && p.contestedFactions.includes(o.id)).length;
+    const row = document.createElement('div');
+    row.className = 'ps-faction';
+    row.innerHTML = `
+      <div class="ps-faction-dot" style="background:${o.color};box-shadow:0 0 5px ${o.color}"></div>
+      <span class="ps-faction-tag" style="color:${o.color}">${o.tag}</span>
+      <span class="ps-faction-name">${o.name}
+        <span style="color:var(--muted);font-size:0.56rem;display:block;margin-top:1px">
+          ${pCount} planet${pCount!==1?'s':''} &bull; ${mCount} moon${mCount!==1?'s':''}${cCount>0?' &bull; <span style="color:#ff5555">⚔ '+cCount+' contested</span>':''}
+        </span>
+      </span>`;
+    fEl.appendChild(row);
+  });
+
+  // Planets
+  const pEl = document.getElementById('ps-planets');
+  pEl.innerHTML = '';
+  planets.forEach(p => {
+    const isContested = p.contested && p.contestedFactions.length >= 2;
+    const owner = ownerById(p.owner);
+    const block = document.createElement('div');
+    block.className = 'ps-planet';
+
+    let statusHTML;
+    if (isContested) {
+      statusHTML = `<span class="ps-planet-status contested">⚔ ${getContestedLabel(p)}</span>`;
+    } else if (owner) {
+      statusHTML = `<span class="ps-planet-status owned" style="color:${owner.color};border-color:${owner.color}">${owner.tag}</span>`;
+    } else {
+      statusHTML = `<span class="ps-planet-status unclaimed">Unclaimed</span>`;
+    }
+
+    const moonRows = p.moons.map(m => {
+      const mc = getOwnerColor(m.owner);
+      const mo = ownerById(m.owner);
+      return `<div class="ps-moon">
+        <div class="ps-moon-dot" style="background:${mc};box-shadow:0 0 3px ${mc}"></div>
+        <span style="color:var(--text)">${m.name}</span>
+        ${mo ? `<span style="color:${mc};margin-left:auto;font-size:0.56rem">${mo.tag}</span>` : `<span style="color:var(--muted);margin-left:auto;font-size:0.56rem">—</span>`}
+      </div>`;
+    }).join('');
+
+    block.innerHTML = `
+      <div class="ps-planet-header">
+        <div class="ps-planet-dot" style="background:${p.color};box-shadow:0 0 6px ${p.color}"></div>
+        <span class="ps-planet-name" style="color:${isContested?'#ff7070':p.color}">${p.name}</span>
+        ${statusHTML}
+      </div>
+      ${p.moons.length > 0 ? `<div class="ps-moons">${moonRows}</div>` : ''}`;
+    pEl.appendChild(block);
+  });
 }
 
 // ── PERSISTENCE ──────────────────────────────────────────────────────────────
