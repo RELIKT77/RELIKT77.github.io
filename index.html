@@ -665,42 +665,179 @@ function togglePwVis() {
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 let owners = [
-  { id: 'o1', name: 'Solaran Empire',  color: '#00e5ff', tag: 'SOL' },
-  { id: 'o2', name: 'Void Collective', color: '#ff3d6e', tag: 'VOI' },
-  { id: 'o3', name: 'Iron Dominion',   color: '#ffd84d', tag: 'IRN' },
+  {
+    "id": "o1",
+    "name": "MIKAZUKI MUNITIONS",
+    "color": "#00e5ff",
+    "tag": "M/M"
+  },
+  {
+    "id": "o2",
+    "name": "GRAY AEROSPACE ORGANIZATION",
+    "color": "#808080",
+    "tag": "GAO"
+  },
+  {
+    "id": "o3",
+    "name": "OSIRIS PROTECTORATE",
+    "color": "#ffffff",
+    "tag": "OSS"
+  },
+  {
+    "id": "ox3e89mm",
+    "name": "FRONTIER-SOUTHERN TRADE COMMISSION",
+    "color": "#ff8000",
+    "tag": "FSC"
+  },
+  {
+    "id": "ox3suvu9",
+    "name": "PEOPLE'S ALLIANCE OF KENTARA & TOLIMAN",
+    "color": "#ff0000",
+    "tag": "PAK"
+  },
+  {
+    "id": "ox68834o",
+    "name": "THE CARRION ACCORDS",
+    "color": "#008040",
+    "tag": "TCA"
+  },
+  {
+    "id": "ox655bdp",
+    "name": "LACONIA",
+    "color": "#0000ff",
+    "tag": "LAC"
+  }
 ];
 
 let planets = [
   {
-    id: 'p1', name: 'Aethon',
-    color: '#4fc3f7', size: 44, owner: 'o1',
-    contested: false, contestedFactions: [],
-    pos: { x: 200, y: 320 },
-    moons: [
-      { id: 'm1a', name: 'Cinder', owner: 'o2', orbitR: 80,  angle: 30  },
-      { id: 'm1b', name: 'Vael',   owner: 'o1', orbitR: 115, angle: 170 },
+    "id": "p1",
+    "name": "LOKI",
+    "color": "#4fc3f7",
+    "size": 60,
+    "owner": "o1",
+    "contested": true,
+    "contestedFactions": [
+      "o1",
+      "o2"
+    ],
+    "pos": {
+      "x": 513.4584013050571,
+      "y": 166.52646801499438
+    },
+    "moons": [
+      {
+        "id": "m1a",
+        "name": "THOR",
+        "owner": "o2",
+        "orbitR": 126.6227562545915,
+        "angle": 47.03687093000694
+      },
+      {
+        "id": "m1b",
+        "name": "ODIN",
+        "owner": "o1",
+        "orbitR": 105.70667759752422,
+        "angle": -124.92801537119878
+      }
     ]
   },
   {
-    id: 'p2', name: 'Morrex',
-    color: '#ef5350', size: 54, owner: 'o2',
-    contested: true, contestedFactions: ['o1','o2'],
-    pos: { x: 520, y: 220 },
-    moons: [
-      { id: 'm2a', name: 'Keth',  owner: 'o3', orbitR: 90,  angle: 60  },
-      { id: 'm2b', name: 'Ossun', owner: 'o2', orbitR: 130, angle: 220 },
-      { id: 'm2c', name: 'Thal',  owner: null, orbitR: 170, angle: 340 },
+    "id": "p2",
+    "name": "PANTHEON",
+    "color": "#ef5350",
+    "size": 55,
+    "owner": null,
+    "contested": false,
+    "contestedFactions": [
+      "o1",
+      "o2"
+    ],
+    "pos": {
+      "x": 238.10766721044047,
+      "y": 426.93535874069244
+    },
+    "moons": [
+      {
+        "id": "m2a",
+        "name": "ARES",
+        "owner": "o2",
+        "orbitR": 111.17647032156877,
+        "angle": -88.99949719887324
+      },
+      {
+        "id": "m2b",
+        "name": "APHRODITE",
+        "owner": "ox655bdp",
+        "orbitR": 125.66886695329654,
+        "angle": 92.46261304368922
+      },
+      {
+        "id": "m2c",
+        "name": "ATHENA",
+        "owner": "ox3e89mm",
+        "orbitR": 98.12742362730633,
+        "angle": -1.1497510357739003
+      },
+      {
+        "id": "xsvcybl",
+        "name": "ARTEMIS",
+        "owner": "ox68834o",
+        "orbitR": 136.8076301118481,
+        "angle": -179.5091649637221
+      },
+      {
+        "id": "xysx18n",
+        "name": "APOLLO",
+        "owner": "o1",
+        "orbitR": 167.4075402750856,
+        "angle": 173.01879880614996
+      }
     ]
   },
   {
-    id: 'p3', name: 'Durath',
-    color: '#a5d6a7', size: 38, owner: 'o3',
-    contested: false, contestedFactions: [],
-    pos: { x: 700, y: 460 },
-    moons: [
-      { id: 'm3a', name: 'Sorn', owner: 'o3', orbitR: 70, angle: 130 },
+    "id": "p3",
+    "name": "EVIRA",
+    "color": "#a5d6a7",
+    "size": 50,
+    "owner": "o3",
+    "contested": false,
+    "contestedFactions": [],
+    "pos": {
+      "x": 689.7226753670473,
+      "y": 437.4120702608754
+    },
+    "moons": [
+      {
+        "id": "m3a",
+        "name": "OSIRIS",
+        "owner": "o3",
+        "orbitR": 89.3767524318114,
+        "angle": 8.401448548551699
+      },
+      {
+        "id": "x9lcoxw",
+        "name": "VEIL",
+        "owner": "o2",
+        "orbitR": 116.54054662921969,
+        "angle": -84.77965135336561
+      },
+      {
+        "id": "xnzvui4",
+        "name": "CASCAIS",
+        "owner": "ox3suvu9",
+        "orbitR": 116.40190082872788,
+        "angle": -179.36622946742895
+      },
+      {
+        "id": "xjtrwiu",
+        "name": "DEMETIO",
+        "owner": "ox3suvu9",
+        "orbitR": 141.72724383846014,
+        "angle": 94.02620729353585
+      }
     ]
-  },
+  }
 ];
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
